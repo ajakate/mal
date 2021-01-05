@@ -1,75 +1,57 @@
-class Parens
+class Kollection
+
+    ATTRS = {
+        parens: { chars: "()" },
+        bracket: { chars: "[]" },
+        curly: { chars: "{}" },
+    }
 
     attr_reader :items
 
-    def initialize(items)
+    def initialize(type, items)
+        @type = type
         @items = items
     end
 
-    def self.open
-        "("
+    def open
+        ATTRS[@type][:chars][0]
     end
 
-    def self.close
-        ")"
-    end
-end
-
-class Bracket
-
-    attr_reader :items
-
-    def initialize(items)
-        @items = items
+    def close
+        ATTRS[@type][:chars][1]
     end
 
-    def self.open
-        "["
+    def self.start?(char)
+        ATTRS.each do |k,v|
+            if v[:chars][0] == char
+                return k
+            end
+        end
+
+        return nil
     end
 
-    def self.close
-        "]"
-    end
-end
-
-class Curley
-
-    attr_reader :items
-
-    def initialize(items)
-        @items = items
-    end
-    
-    def self.open
-        "{"
+    def self.closer_for(type)
+        ATTRS[type][:chars][1]
     end
 
-    def self.close
-        "}"
-    end
 end
 
 class Reader
 
     TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/
 
-    PARENS = [Parens, Bracket, Curley]
-
     def initialize(tokens)
-        # puts "Herrr"
-        # puts tokens
         @tokens = tokens
         @token_index = 0
         @full = read_form
     end
 
     def out
-        # puts "hey"
         @full
     end
 
     def next!
-        # puts "ne #{@token_index}"
         @token_index += 1
         @tokens[@token_index - 1]
     end
@@ -78,17 +60,8 @@ class Reader
         @tokens[@token_index]
     end
 
-    def get_list_type(peek)
-        PARENS.each do |klass|
-            if peek == klass.open
-                return klass
-            end
-        end
-        nil
-    end
-
     def read_form
-        list_type = get_list_type(peek)
+        list_type = Kollection.start?(peek)
         if list_type
             next!
             return read_list(list_type)
@@ -103,24 +76,18 @@ class Reader
 
     def read_list(list_type)
         my_list = []
-        while (peek != list_type.close) do
-            # puts "fuck"
-            # puts peek
+        while (peek != Kollection.closer_for(list_type)) do
             if peek == ''
                 raise 'unbalanced'
             end
             my_list << read_form
         end
         next!
-        list_type.new(my_list)
+        Kollection.new(list_type, my_list)
     end
 
     def self.tokenize(string)
-        # puts "hi"
-        # puts string
-        poo = "(#{string.chomp})"
-        # puts poo
-        poo.scan(TOKENS).map{ |i| i[0] }
+        "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }
     end
 
     def self.read_str(string)
