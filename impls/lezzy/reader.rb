@@ -77,6 +77,13 @@ def read_list(reader, list)
 end
 
 def read_form(reader)
+    if reader.peek == "'"
+        reader.next!
+        quote = Kollection.new(:parens, ["quote"])
+        quote.append(read_form(reader))
+        return quote
+    end
+
     liste = Kollection.build_from_initial(reader.peek)
     if liste
         reader.next!
