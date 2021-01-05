@@ -21,5 +21,7 @@ loop do
     print "user> "
     input = gets
     puts rep(input)
+rescue => e
+    puts e
 end
 
