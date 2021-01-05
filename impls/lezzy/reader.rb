@@ -39,16 +39,9 @@ end
 
 class Reader
 
-    TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/
-
     def initialize(tokens)
         @tokens = tokens
         @token_index = 0
-        @full = read_form
-    end
-
-    def out
-        @full
     end
 
     def next!
@@ -60,39 +53,42 @@ class Reader
         @tokens[@token_index]
     end
 
-    def read_form
-        list_type = Kollection.start?(peek)
-        if list_type
-            next!
-            return read_list(list_type)
-        else
-            return read_atom
+end
+
+def read_atom(reader)
+    reader.next!
+end
+
+def read_list(reader, list_type)
+    my_list = []
+    while (reader.peek != Kollection.closer_for(list_type)) do
+        if reader.peek == ''
+            raise 'unbalanced'
         end
+        my_list << read_form(reader)
     end
+    reader.next!
+    Kollection.new(list_type, my_list)
+end
 
-    def read_atom
-        next!
+def read_form(reader)
+    list_type = Kollection.start?(reader.peek)
+    if list_type
+        reader.next!
+        return read_list(reader, list_type)
+    else
+        return read_atom(reader)
     end
+end
 
-    def read_list(list_type)
-        my_list = []
-        while (peek != Kollection.closer_for(list_type)) do
-            if peek == ''
-                raise 'unbalanced'
-            end
-            my_list << read_form
-        end
-        next!
-        Kollection.new(list_type, my_list)
-    end
 
-    def self.tokenize(string)
-        "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }
-    end
+TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/
 
-    def self.read_str(string)
-        reader = new(tokenize(string))
-        reader.out
-    end
+def tokenize(string)
+    "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }
+end
 
+def read_str(string)
+    reader = Reader.new(tokenize(string))
+    read_form(reader)
 end

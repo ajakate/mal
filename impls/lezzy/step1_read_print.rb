@@ -2,7 +2,7 @@ require_relative "reader"
 require_relative "printer"
 
 def READ(args)
-    Reader.read_str(args)
+    read_str(args)
 end
 
 def EVAL(args)
