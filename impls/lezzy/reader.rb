@@ -8,9 +8,13 @@ class Kollection
 
     attr_reader :items
 
-    def initialize(type, items)
+    def initialize(type, items = [])
         @type = type
         @items = items
+    end
+
+    def append(item)
+        @items.append(item)
     end
 
     def open
@@ -21,10 +25,10 @@ class Kollection
         ATTRS[@type][:chars][1]
     end
 
-    def self.start?(char)
+    def self.build_from_initial(char)
         ATTRS.each do |k,v|
             if v[:chars][0] == char
-                return k
+                return new(k)
             end
         end
 
@@ -59,23 +63,24 @@ def read_atom(reader)
     reader.next!
 end
 
-def read_list(reader, list_type)
-    my_list = []
-    while (reader.peek != Kollection.closer_for(list_type)) do
+def read_list(reader, list)
+    next_char = reader.peek
+
+    while (reader.peek != list.close) do
         if reader.peek == ''
             raise 'unbalanced'
         end
-        my_list << read_form(reader)
+        list.append(read_form(reader))
     end
     reader.next!
-    Kollection.new(list_type, my_list)
+    list
 end
 
 def read_form(reader)
-    list_type = Kollection.start?(reader.peek)
-    if list_type
+    liste = Kollection.build_from_initial(reader.peek)
+    if liste
         reader.next!
-        return read_list(reader, list_type)
+        return read_list(reader, liste)
     else
         return read_atom(reader)
     end
