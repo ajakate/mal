@@ -67,7 +67,7 @@ def read_list(reader, list)
     next_char = reader.peek
 
     while (reader.peek != list.close) do
-        if reader.peek == ''
+        if reader.peek == '' or reader.peek.nil?
             raise 'unbalanced'
         end
         list.append(read_form(reader))
@@ -80,6 +80,34 @@ def read_form(reader)
     if reader.peek == "'"
         reader.next!
         quote = Kollection.new(:parens, ["quote"])
+        quote.append(read_form(reader))
+        return quote
+    end
+
+    if reader.peek == "`"
+        reader.next!
+        quote = Kollection.new(:parens, ["quasiquote"])
+        quote.append(read_form(reader))
+        return quote
+    end
+
+    if reader.peek == "~"
+        reader.next!
+        quote = Kollection.new(:parens, ["unquote"])
+        quote.append(read_form(reader))
+        return quote
+    end
+
+    if reader.peek == "@"
+        reader.next!
+        quote = Kollection.new(:parens, ["deref"])
+        quote.append(read_form(reader))
+        return quote
+    end
+
+    if reader.peek == "~@"
+        reader.next!
+        quote = Kollection.new(:parens, ["splice-unquote"])
         quote.append(read_form(reader))
         return quote
     end
@@ -97,7 +125,7 @@ end
 TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/
 
 def tokenize(string)
-    "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }
+    "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }.select{ |t| t[0..0] != ";" }
 end
 
 def read_str(string)
