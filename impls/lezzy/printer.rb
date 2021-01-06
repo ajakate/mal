@@ -7,5 +7,5 @@ def pr_str(tree)
         else
             el
         end
-    end.join(' ').gsub("' ", "'")
+    end.join(' ')
 end

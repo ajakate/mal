@@ -77,39 +77,22 @@ def read_list(reader, list)
 end
 
 def read_form(reader)
-    if reader.peek == "'"
-        reader.next!
-        quote = Kollection.new(:parens, ["quote"])
-        quote.append(read_form(reader))
-        return quote
-    end
 
-    if reader.peek == "`"
-        reader.next!
-        quote = Kollection.new(:parens, ["quasiquote"])
-        quote.append(read_form(reader))
-        return quote
-    end
+    special_forms = {
+        "'" => "quote",
+        "`" => "quasiquote",
+        "~" => "unquote",
+        "@" => "deref",
+        "~@" => "splice-unquote",
+    }
 
-    if reader.peek == "~"
-        reader.next!
-        quote = Kollection.new(:parens, ["unquote"])
-        quote.append(read_form(reader))
-        return quote
-    end
-
-    if reader.peek == "@"
-        reader.next!
-        quote = Kollection.new(:parens, ["deref"])
-        quote.append(read_form(reader))
-        return quote
-    end
-
-    if reader.peek == "~@"
-        reader.next!
-        quote = Kollection.new(:parens, ["splice-unquote"])
-        quote.append(read_form(reader))
-        return quote
+    special_forms.each do |k,v|
+        if reader.peek == k
+            reader.next!
+            quote = Kollection.new(:parens, [v])
+            quote.append(read_form(reader))
+            return quote
+        end
     end
 
     liste = Kollection.build_from_initial(reader.peek)
