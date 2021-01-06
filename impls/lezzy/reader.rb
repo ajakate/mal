@@ -59,8 +59,19 @@ class Reader
 
 end
 
+def parse_string(atom)
+    # failing test for escaped strings
+    if atom[-1] != '"' or atom.length == 1
+        raise 'unbalanced'
+    end
+end
+
 def read_atom(reader)
-    reader.next!
+    atom = reader.next!
+    if atom[0] == '"'
+        parse_string(atom)
+    end
+    atom
 end
 
 def read_list(reader, list)
@@ -108,7 +119,8 @@ end
 TOKENS = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/
 
 def tokenize(string)
-    "(#{string.chomp})".scan(TOKENS).map{ |i| i[0] }.select{ |t| t[0..0] != ";" }
+    tokens = string.chomp.scan(TOKENS).map{ |i| i[0] }.select{ |t| t[0..0] != ";" }.select{|t| t != ''}
+    ["("] + tokens + [")"]
 end
 
 def read_str(string)
